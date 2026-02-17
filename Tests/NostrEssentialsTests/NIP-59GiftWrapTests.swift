@@ -36,7 +36,7 @@ final class NIP_59GiftWrapTests: XCTestCase {
 
     func testCreateSeal() throws {
         // First create a rumor
-        var unsignedEvent = Event(
+        let unsignedEvent = Event(
             pubkey: aliceKeys.publicKeyHex,
             content: "Hello World", kind: 1, created_at: 1676784320
         )
@@ -55,10 +55,11 @@ final class NIP_59GiftWrapTests: XCTestCase {
     
     func testGiftWrap() throws {
         // First create some event to wrap (can be any event, sig will be removed)
-        let unsignedEvent = Event(
+        var unsignedEvent = Event(
             pubkey: aliceKeys.publicKeyHex,
             content: "Hello World", kind: 1, created_at: 1676784320
         )
+        _ = unsignedEvent.withId()
 
         let giftWrap = try createGiftWrap(unsignedEvent, receiverPubkey: bobKeys.publicKeyHex, keys: aliceKeys)
         
@@ -89,12 +90,25 @@ final class NIP_59GiftWrapTests: XCTestCase {
             XCTAssertEqual(unwrappedGift.rumor.pubkey, unwrappedGift.seal.pubkey)
         }
     }
+    
+    func testDecodeRumor() throws {
+        let rumorJson = ###"{"content":"Unwrap debug test - trace the decryption failure","created_at":1771354886,"id":"ba45d6e610c2f5e05be5c4f34b98396143952ae2d8f2f16b7e925d65acf5ff6c","kind":14,"pubkey":"ffb838f52e101c8677ee2fa83982ab80669f40e04768454036ec894fba4109c1","tags":[["p","9be0be0e64d38a29a9cec9a5c8ef5d873c2bfa5362a4b558da5ff69bc3cbb81e"]]}"###
+        
+        guard let rumor = Event.fromJson(rumorJson) else { throw GiftWrapError.DecodeRumorError }
+        
+        XCTAssertEqual(rumor.kind, 14)
+        XCTAssertEqual(rumor.content, "Unwrap debug test - trace the decryption failure")
+        XCTAssertEqual(rumor.id, "ba45d6e610c2f5e05be5c4f34b98396143952ae2d8f2f16b7e925d65acf5ff6c")
+        
+
+    }
 
     private func getTestGiftWrapEvent() throws -> Event {
-        let unsignedEvent = Event(
+        var unsignedEvent = Event(
             pubkey: aliceKeys.publicKeyHex,
             content: "Hello World", kind: 14, created_at: 1676784320
         )
+        _ = unsignedEvent.withId()
 
         return try createGiftWrap(unsignedEvent, receiverPubkey: bobKeys.publicKeyHex, keys: aliceKeys)
     }

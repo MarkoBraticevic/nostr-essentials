@@ -78,6 +78,7 @@ public enum GiftWrapError: Error {
 // Create a Gift Wrap
 // NIP-59: A gift wrap event is a kind:1059 event that wraps a seal (kind: 13), which in turn wraps a rumor (any kind). tags SHOULD include any information needed to route the event to its intended recipient, including the recipient's p tag or NIP-13 proof of work.
 public func createGiftWrap(_ rumor: Event, receiverPubkey: String, keys: Keys) throws -> Event {
+    guard rumor.isRumor() else { throw GiftWrapError.InvalidRumorError }
     // One-time use key
     guard let oneTimeUseKeys = try? Keys.newKeys() else { throw GiftWrapError.OneOffKeyGenerationError }
     

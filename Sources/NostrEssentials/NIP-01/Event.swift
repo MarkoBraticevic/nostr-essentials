@@ -20,7 +20,7 @@ public struct Event: Codable, Equatable, Identifiable {
     public var kind: Int
     public var tags: [Tag]
     public var content: String
-    public var sig: String
+    public var sig: String? = ""
 
     enum CodingKeys: String, CodingKey {
         case id
@@ -32,7 +32,7 @@ public struct Event: Codable, Equatable, Identifiable {
         case sig
     }
 
-    public init(pubkey:String = "", content:SetMetadata) {
+    public init(pubkey: String = "", content: SetMetadata) {
         self.created_at = Int(Date.now.timeIntervalSince1970)
         self.kind = 0
         self.content = content.json() ?? ""
@@ -42,7 +42,7 @@ public struct Event: Codable, Equatable, Identifiable {
         self.sig = ""
     }
 
-    public init(pubkey:String = "", content:String = "", kind:Int = 1, created_at:Int = Int(Date.now.timeIntervalSince1970), id:String = "", tags:[Tag] = [], sig:String = "") {
+    public init(pubkey: String = "", content: String = "", kind: Int = 1, created_at: Int = Int(Date.now.timeIntervalSince1970), id: String = "", tags: [Tag] = [], sig: String? = "") {
         self.kind = kind
         self.created_at = created_at
         self.content = content
@@ -103,7 +103,10 @@ public struct Event: Codable, Equatable, Identifiable {
         if self.id != String(bytes:sha256Serialized.bytes) {
             return false
         }
-        if self.sig.isEmpty {
+        if sig == nil {
+            return true
+        }
+        if self.sig == "" {
             return true
         }
         return false
@@ -118,8 +121,9 @@ public struct Event: Codable, Equatable, Identifiable {
 
         let xOnlyKey = try secp256k1.Schnorr.XonlyKey(dataRepresentation: self.pubkey.bytes, keyParity: 1)
 
+        guard let sig else { throw EventError.InvalidSignature }
         // signature from this event
-        let schnorrSignature = try secp256k1.Schnorr.SchnorrSignature(dataRepresentation: self.sig.bytes)
+        let schnorrSignature = try secp256k1.Schnorr.SchnorrSignature(dataRepresentation: sig.bytes)
 
         // public and signature from this event is valid?
         guard xOnlyKey.isValidSignature(schnorrSignature, for: sha256Serialized) else {
