@@ -57,16 +57,16 @@ public struct Event: Codable, Equatable, Identifiable {
         return self
     }
     
-    private func computeId(_ event:Event? = nil) -> String {
+    private func computeId(_ event: Event? = nil) -> String {
         let idDigest = self.computeIdDigest(event ?? self)
         return String(bytes:idDigest.bytes)
     }
     
-    private func computeId(_ idDigest:SHA256Digest) -> String {
+    private func computeId(_ idDigest: SHA256Digest) -> String {
         return String(bytes:idDigest.bytes)
     }
     
-    private func computeIdDigest( _ event:Event? = nil) -> SHA256Digest {
+    private func computeIdDigest( _ event: Event? = nil) -> SHA256Digest {
         let encoder = JSONEncoder()
         encoder.outputFormatting = .withoutEscapingSlashes
         
@@ -77,7 +77,7 @@ public struct Event: Codable, Equatable, Identifiable {
         return SHA256.hash(data: serializedEvent)
     }
 
-    public mutating func sign(_ keys:Keys, replaceAuthor:Bool = false) throws -> Event {
+    public mutating func sign(_ keys: Keys, replaceAuthor: Bool = false) throws -> Event {
         
         guard replaceAuthor || self.pubkey == keys.publicKeyHex else {
             throw EventError.PubkeyMismatch
